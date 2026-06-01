@@ -1,40 +1,37 @@
 # lms_rag_endpoint
 
-Isolated AI navigation endpoint for MOSPOLI LMS.
+Изолированный HTTP-сервис семантического поиска по навигации для LMS MOSPOLI. Принимает запросы на `/api/navigation-search` и ничего лишнего не делает. Можно запускать внутри портативной QEMU-VM с Docker Compose.
 
-The service is intentionally separated from the LMS frontend. It exposes HTTP endpoints for semantic navigation search and can run inside a portable QEMU Linux VM with Docker Compose.
-
-## Main Files
+## Структура
 
 ```text
-ai-navigation-service/      # standalone Node.js/TypeScript HTTP API
-docker-compose.ai.yml       # AI service + llama.cpp embedding server
-docker-compose.ai.mock.yml  # AI service only, mock embeddings
-qemu/                       # portable QEMU VM scripts and docs
-models/                     # local GGUF model folder, ignored by git
-deploy/                     # nginx, VM and Vast.ai deployment helpers
-plan.md                     # implementation plan
-goal.md                     # source architecture goal
-tz.md                       # source technical specification
+ai-navigation-service/      # самостоятельный HTTP API на Node.js/TypeScript
+docker-compose.ai.yml       # AI-сервис + embedding-сервер llama.cpp
+docker-compose.ai.mock.yml  # AI-сервис без llama.cpp, моковые эмбеддинги
+qemu/                       # скрипты и документация для QEMU-VM
+models/                     # папка для GGUF-моделей, в git не попадает
+deploy/                     # конфиги nginx, скрипты деплоя на VM и Vast.ai
 ```
 
 ## API
+
+Два эндпоинта:
 
 ```http
 GET /health
 POST /api/navigation-search
 ```
 
-Example:
+Пример:
 
 ```powershell
 curl http://localhost:3001/health
 curl -X POST http://localhost:3001/api/navigation-search -H "Content-Type: application/json" -d '{"query":"войти","locale":"ru"}'
 ```
 
-## Local Mock Mode
+## Локальный запуск без Docker
 
-Use this to verify the API without Docker, QEMU, llama.cpp or the GGUF model:
+Чтобы проверить API без Docker, QEMU, llama.cpp и GGUF-модели:
 
 ```powershell
 cd ai-navigation-service
@@ -43,43 +40,38 @@ npm run build
 $env:EMBEDDING_MOCK="true"; npm start
 ```
 
-In another shell:
+В другом терминале:
 
 ```powershell
 cd ai-navigation-service
 $env:AI_NAVIGATION_URL="http://localhost:3001"; npm run test:api
 ```
 
-## Docker Mock Mode
+## Docker с моковыми эмбеддингами
 
 ```bash
 docker compose -f docker-compose.ai.mock.yml up --build
 ```
 
-## Real AI Stack
+## Полный стек с реальной моделью
 
-Place the required model at:
+Положить модель в:
 
 ```text
 models/qwen3-embedding-4b-q5_k_m.gguf
 ```
 
-Then, inside the Linux VM or any Docker-capable Linux host:
+Затем внутри Linux-VM или на любом Linux-хосте с Docker:
 
 ```bash
 docker compose -f docker-compose.ai.yml up --build
 ```
 
-The real stack starts:
+Запускаются два контейнера: `ai-navigation-service` на порту 3001 и embedding-сервер llama.cpp на 8080.
 
-```text
-ai-navigation-service      :3001
-llama.cpp embedding server :8080
-```
+## QEMU-VM
 
-## Portable QEMU VM
-
-Start from Windows:
+Запуск из Windows:
 
 ```powershell
 .\qemu\start-vm.ps1
@@ -91,41 +83,33 @@ SSH:
 .\qemu\ssh\connect.ps1 -User mospli
 ```
 
-Install and verify Docker inside the VM:
+Внутри VM — установка и проверка Docker:
 
 ```bash
 sudo bash qemu/scripts/install-docker-ubuntu.sh
 bash qemu/scripts/verify-docker.sh
 ```
 
-Stop the VM:
+Остановка:
 
 ```powershell
 .\qemu\stop-vm.ps1
 ```
 
-See `qemu/README.md` for full VM requirements, port forwarding and known limitations.
+Подробнее про требования к VM, проброс портов и известные ограничения — в `qemu/README.md`.
 
-## LMS Integration
+## Интеграция с LMS
 
-The LMS should call same-origin:
+LMS отправляет запросы на тот же origin:
 
 ```text
 /api/navigation-search
 ```
 
-The LMS server or dev proxy forwards that request to:
+LMS-сервер или dev-прокси пробрасывает их на:
 
 ```env
 AI_NAVIGATION_UPSTREAM=http://AI_HOST:3001
 ```
 
-See `deploy/nginx/mospoli-lms-ai-proxy.conf`.
-
-## Current Limitations
-
-- This is navigation search, not a chatbot.
-- There is no RAG over course files, lectures or PDFs.
-- QEMU mode is CPU-first.
-- GPU passthrough from Windows host into QEMU is out of scope for MVP.
-- VM images, portable QEMU binaries, SSH keys and GGUF models are local artifacts and are ignored by git.
+Конфиг nginx: `deploy/nginx/mospoli-lms-ai-proxy.conf`.
