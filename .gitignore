@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+.eslintcache
+
+# Logs
+logs/
+.logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment and local overrides
+.env
+.env.*
+!.env.example
+*.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Test artifacts
+/cypress/videos/
+/cypress/screenshots/
+__screenshots__/
+
+# Vite temporary files
+*.timestamp-*-*.mjs
+
+# ChunkHound local database
+.chunkhound/
+
+# Portable AI/QEMU artifacts: keep docs/scripts/configs, ignore large/local runtime files
+models/*.gguf
+models/*.bin
+models/*.safetensors
+
+qemu/bin/
+qemu/downloads/
+qemu/logs/
+qemu/shared/
+qemu/images/*.qcow2
+qemu/images/*.img
+qemu/images/*.iso
+qemu/images/*.raw
+qemu/images/*.vhd
+qemu/images/*.vdi
+
+# Local SSH material for portable VM
+qemu/ssh/known_hosts
+qemu/ssh/mospli_ai
+qemu/ssh/mospli_ai.pub
